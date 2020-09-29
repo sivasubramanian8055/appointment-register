@@ -3,17 +3,34 @@ import Calendar from 'react-calendar';
 import './App.css';
 import'bootstrap/dist/css/bootstrap.min.css';
 import 'react-calendar/dist/Calendar.css';
-import {app} from './config.js';
-import Firebase from "firebase";
+import 'font-awesome/css/font-awesome.min.css';
+import {app,storage,database} from './config.js';
 import MicRecorder from 'mic-recorder-to-mp3';
-import "firebase/storage";
-var database = Firebase.database();
-var storage=Firebase.storage();
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
+var ref = database.ref('/');
 class App extends Component {
 
   async componentWillMount() {
     await this.aud()
+    const userRef = database.ref('/');
+userRef.on('value', (snapshot) => {
+  var dt=[]
+  snapshot.forEach(data => {
+    const dataVal = data.val()
+    let dum={
+      id: data.key,
+      name: dataVal.name,
+      date: dataVal.date,
+      slot: dataVal.slot,
+      descreption:dataVal.descreption,
+      audioUrl:dataVal.audioUrl
+      }
+   dt.push(dum)
+  })
+
+     this.setState({arr:dt})
+})
+
   }
   async aud(){
     navigator.getUserMedia({ audio: true },
@@ -103,13 +120,14 @@ constructor(props){
   file:'',
   slot:'',
   text:'',
-  date: new Date()
+  date: new Date(),
+  arr:[]
   }
   }
   render() {
   return (
     <div>
-    <div className="container mx-auto">
+    <div className="container w-50 h-10">
     <form onSubmit={this.onSubmitClick}>
     <div className="form-group">
       <label for="exampleInputEmail1">Name</label>
@@ -122,21 +140,23 @@ constructor(props){
        />
     <label for="appointmentDate">appointment Slot:</label>
     <div onChange={this.onSlotChange} className="form-group">
-      <input type="radio" value="10:00am-11:00am" name="slot" /> 10:00am-11:00am
-      <input type="radio" value="11:00am-12:00pm" name="slot" />11:00am-12:00pm
-      <input type="radio" value="12:00pm-1:00pm" name="slot" /> 12:00pm-1:00pm
-      <input type="radio" value="1:00pm-2:00pm" name="slot" /> 1:00pm-2:00pm
+      <input type="radio" value="10:00am-11:00am" name="slot" className="ml-3" /> 10:00am-11:00am
+      <input type="radio" value="11:00am-12:00pm" name="slot" className="ml-3" />11:00am-12:00pm
+      <input type="radio" value="12:00pm-1:00pm" name="slot"  className="ml-3"/> 12:00pm-1:00pm
+      <input type="radio" value="1:00pm-2:00pm" name="slot" className="ml-3" /> 1:00pm-2:00pm
     </div>
-    <br/>
     <label for="Record">Record your Message</label>
     <div className="container">
-    <button onClick={this.start} disabled={this.state.isRecording}>
+    <button onClick={this.start} className="btn btn-dark" disabled={this.state.isRecording}>
+    <i className="fa fa-play mr-2" aria-hidden="true"></i>
      Record
     </button>
-    <button onClick={this.stop} disabled={!this.state.isRecording}>
+    <button onClick={this.stop} className="btn btn-dark ml-2"  disabled={!this.state.isRecording}>
+    <i  className="fa fa-stop mr-2" aria-hidden="true"></i>
      Stop
     </button>
-    <button onClick={this.retake} disabled={this.state.isRecording}>
+    <button onClick={this.retake} className="btn btn-dark ml-2" disabled={this.state.isRecording}>
+    <i className="fa fa-refresh mr-2" aria-hidden="true"></i>
      Retake
     </button>
     <br/>
@@ -148,6 +168,27 @@ constructor(props){
   </div>
     <button type="submit" className="btn btn-primary">Submit</button>
   </form>
+  </div>
+  <div className="container w-50">
+  {
+    this.state.arr.map((a)=>{
+      return(
+        <div class="card mt-2">
+    <div class="card-header">
+      ID:{' '}{a.id}
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">Name:{a.name}</h5>
+      <p class="card-text">Date of appointment:{a.date}</p>
+      <p class="card-text">slot booked:{a.slot}</p>
+      <p class="card-text">descreption:{a.descreption}</p>
+      <p class="card-text">Recorded message</p>
+      <audio src={a.audioUrl} controls="controls" />
+    </div>
+  </div>
+    )
+    })
+  }
   </div>
   </div>
   );
